@@ -1,3 +1,4 @@
+# -*- coding:utf-8  -*-
 import platform
 
 progv = '2021.8.5'
@@ -171,7 +172,7 @@ elif platform.system() == 'Linux':#判断当前系统是不是Linux
     elif "i386" in archti or "i686" in archti:
         bit = "32 位 x86 架构"
     else:
-        bit = archti
+        bit = archti[:-1]
     if os.path.exists("/sys/firmware/efi/efivars"):
         bootst = 'UEFI'
         firmtype = 'UEFI'
@@ -194,9 +195,32 @@ elif platform.system() == 'Linux':#判断当前系统是不是Linux
     memcap = int(int(memcab)/1024)
     memreb = eval(meminfo[2][13:-4])
     memrem = int(int(memreb)/1024)
-    gpunam = os.popen(r'lspci | grep VGA', 'r').readline()[35:]
-    print('程序版本: {}\r\n\r\n操作系统: {}\r\n系统内核版本: {}内核信息和编译时间: {}系统针对的 CPU 架构: {}\r\n系统启动方式: {}\r\n固件类型: {}\r\n\r\n处理器: {} ({} 个, {} 核 {} 线程)\r\n系统已识别内存容量: {} MiB ({} MiB 可用)\r\n显卡: {}\r\n按回车退出...'.format(progv,sku,kernel_ver,kernel_time,bit,bootst,firmtype,cpunam,cpucount,cores,ths,memcap,memrem,gpunam))
+    gpunam = os.popen(r'lspci | grep VGA', 'r').readline()[35:-1]
+    hnctl_jdg = os.popen(r'hostnamectl', 'r').readline()
+    if 'not found' in hnctl_jdg:
+        systyp = manu = '未知'
+        model = '未知，需要 hostnamectl 程序。'
+    else:
+        chassis = os.popen(r'hostnamectl | grep Chassis', 'r').readline()[18:]
+        if 'vm' in chassis:
+            systyp = '虚拟机'
+            virtype = os.popen(r'hostnamectl | grep Virtualization', 'r').readline()[18:-1]
+            manu = '虚拟化类型为 {}'.format(virtype)
+            model = '无'
+        else:
+            if 'desktop' in chassis:
+                systyp = '台式机'
+            elif 'laptop' in chassis:
+                systyp = '笔记本'
+            else:
+                systyp = chassis[:-1]
+            manu = os.popen(r'hostnamectl | grep Vendor', 'r').readline()[18:-1]
+            model = os.popen(r'hostnamectl | grep Model', 'r').readline()[18:-1]
+    print('程序版本: {}\r\n\r\n操作系统: {}\r\n系统内核版本: {}内核信息和编译时间: {}系统针对的 CPU 架构: {}\r\n\
+系统启动方式: {}\r\n固件类型: {}\r\n\r\n处理器: {} ({} 个, {} 核 {} 线程)\r\n系统已识别内存容量: {} MiB ({} MiB 可用)\r\n\
+显卡: {}\r\n\r\n计算机类型: {}\r\n制造商: {}\r\n型号: {}\r\n\r\n按回车退出...'\
+          .format(progv,sku,kernel_ver,kernel_time,bit,bootst,firmtype,cpunam,cpucount,cores,ths,memcap,memrem,gpunam,systyp,manu,model))
     input();
 else:
-    print('本程序目前仅支持 Windows 和 GNU/Linux 系统。按回车键退出。')
+    print('本程序目前仅支持 Windows 系统和 GNU/Linux 发行版。按回车键退出。')
     input();
